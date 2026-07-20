@@ -1,0 +1,26 @@
+# Auto normalize line endings
+* text=auto
+
+# Explicitly set common text file types
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.json text
+*.css text
+*.scss text
+*.html text
+*.md text
+*.yml text
+*.yaml text
+*.gitignore text
+*.gitattributes text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.pdf binary
