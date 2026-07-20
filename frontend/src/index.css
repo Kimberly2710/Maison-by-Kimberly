@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@reference "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(180deg, #7A1040 0%, #F7E8EE 55%, #FDF4F7 100%);
+    color: #3a0f20;
+    overflow-x: hidden;
+  }
+  a {
+    color: #7A1040;
+    text-decoration: none;
+  }
+  a:hover {
+    color: #5a0f2e;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    display: inline-block;
+    background: #7A1040;
+    color: #fff;
+    padding: 1rem 2.25rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition-property: all;
+    transition-duration: 200ms;
+  }
+  .btn-primary:hover {
+    background: #5a0f2e;
+    transform: translateY(-1px);
+  }
+  .btn-outline {
+    display: inline-block;
+    border: 1px solid #7A1040;
+    color: #7A1040;
+    padding: 1rem 2.25rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition-property: all;
+    transition-duration: 200ms;
+  }
+  .btn-outline:hover {
+    background: #7A1040;
+    color: #fff;
+  }
+  .section-eyebrow {
+    color: #c47090;
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    display: block;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: #7A1040;
+    text-align: center;
+    margin-bottom: 3rem;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 300;
+  }
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #fdf4f7; }
+::-webkit-scrollbar-thumb { background: #c47090; border-radius: 3px; }
+
+.hero-title {
+  font-size: clamp(72px, 12vw, 130px);
+  line-height: 1.05;
+}
+
+.filter-scroll {
+  scrollbar-width: none;
+}
+.filter-scroll::-webkit-scrollbar { display: none; }
