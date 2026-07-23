@@ -16,13 +16,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp/;
+    const isVideo = file.fieldname === 'video_file';
+    const allowed = isVideo ? /mp4|mov|webm|avi/ : /jpeg|jpg|png|webp/;
     const ext = allowed.test(path.extname(file.originalname).toLowerCase());
     const mime = allowed.test(file.mimetype);
     if (ext && mime) return cb(null, true);
-    cb(new Error('Only image files are allowed'));
+    cb(new Error(isVideo ? 'Only video files are allowed' : 'Only image files are allowed'));
   },
 });
 
@@ -50,8 +51,8 @@ router.get('/:id', (req, res) => {
   });
 });
 
-router.post('/', upload.fields([{ name: 'front_image' }, { name: 'back_image' }]), (req, res) => {
-  const { name, category, price, size, description, is_new_arrival } = req.body;
+router.post('/', upload.fields([{ name: 'front_image' }, { name: 'back_image' }, { name: 'video_file' }]), (req, res) => {
+  const { name, category, price, size, description, is_new_arrival, video_url } = req.body;
 
   if (!name || !category || !price) {
     return res.status(400).json({ error: 'Name, category and price are required' });
@@ -59,11 +60,13 @@ router.post('/', upload.fields([{ name: 'front_image' }, { name: 'back_image' }]
 
   const front_image = req.files?.front_image?.[0]?.filename || null;
   const back_image = req.files?.back_image?.[0]?.filename || null;
+  const video_file = req.files?.video_file?.[0]?.filename || null;
   const image = front_image || back_image || null;
+  const cleanedVideoUrl = video_url?.trim() || null;
 
   const sql = `
-    INSERT INTO products (name, category, price, size, description, image, front_image, back_image, is_new_arrival)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO products (name, category, price, size, description, image, front_image, back_image, video_url, video_file, is_new_arrival)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(sql, [
@@ -75,6 +78,8 @@ router.post('/', upload.fields([{ name: 'front_image' }, { name: 'back_image' }]
     image,
     front_image,
     back_image,
+    cleanedVideoUrl,
+    video_file,
     is_new_arrival === '1' ? 1 : 0,
   ], (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -93,11 +98,13 @@ router.delete('/:id', (req, res) => {
   });
 });
 
-router.put('/:id', upload.fields([{ name: 'front_image' }, { name: 'back_image' }]), (req, res) => {
-  const { name, category, price, size, description, sold, is_new_arrival } = req.body;
+router.put('/:id', upload.fields([{ name: 'front_image' }, { name: 'back_image' }, { name: 'video_file' }]), (req, res) => {
+  const { name, category, price, size, description, sold, is_new_arrival, video_url } = req.body;
   const front_image = req.files?.front_image?.[0]?.filename || null;
   const back_image = req.files?.back_image?.[0]?.filename || null;
+  const video_file = req.files?.video_file?.[0]?.filename || null;
   const image = front_image || back_image || null;
+  const cleanedVideoUrl = video_url?.trim() || null;
 
   // Build set clause dynamically
   const fields = [];
@@ -111,6 +118,8 @@ router.put('/:id', upload.fields([{ name: 'front_image' }, { name: 'back_image' 
   if (is_new_arrival !== undefined) { fields.push('is_new_arrival = ?'); params.push(is_new_arrival === '1' ? 1 : 0); }
   if (front_image) { fields.push('front_image = ?'); params.push(front_image); }
   if (back_image) { fields.push('back_image = ?'); params.push(back_image); }
+  if (video_file) { fields.push('video_file = ?'); params.push(video_file); }
+  if (video_url !== undefined) { fields.push('video_url = ?'); params.push(cleanedVideoUrl); }
   if (image) { fields.push('image = ?'); params.push(image); }
 
   if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });

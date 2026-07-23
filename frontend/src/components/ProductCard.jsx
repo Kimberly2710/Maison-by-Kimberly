@@ -7,20 +7,20 @@ const CAT_LABELS = {
   dresses: 'Dresses',
   tops: 'Tops',
   'crop-tops': 'Crop Tops',
-  'boho-skirts': 'Boho Skirts',
+  'boho-skirts': 'Skirt / Boho Skirts',
   trousers: 'Trousers',
   palazzo: 'Palazzo / Official',
   shoes: 'Shoes',
-  
 }
 
 export default function ProductCard({ product }) {
-  const { name, category, price, size, description, image, front_image, back_image, sold } = product
+  const { name, category, price, size, description, image, front_image, back_image, video_url, video_file, sold } = product
   const [viewOpen, setViewOpen] = useState(false)
   const [selectedSide, setSelectedSide] = useState(front_image ? 'front' : 'back')
 
   const previewImage = image || front_image || back_image
   const displayImage = selectedSide === 'back' ? back_image || front_image || image : front_image || image || back_image
+  const videoSrc = video_file ? `/uploads/${video_file}` : video_url || null
 
   const waMessage = encodeURIComponent(
     `Hi Kim! I am interested in:\n\n*${name}*\nPrice: KSh ${Number(price).toLocaleString()}\nSize: ${size || 'Please advise'}\n\nIs this still available?`
@@ -104,6 +104,11 @@ export default function ProductCard({ product }) {
             </button>
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.9fr] gap-6 p-8">
               <div className="space-y-4">
+                {videoSrc ? (
+                  <div className="rounded-3xl border border-blush-border bg-black/95 p-3">
+                    <video src={videoSrc} controls playsInline className="w-full aspect-video rounded-2xl object-cover" />
+                  </div>
+                ) : null}
                 <div className="aspect-[4/5] bg-blush overflow-hidden rounded-3xl border border-blush-border">
                   {displayImage ? (
                     <img src={`/uploads/${displayImage}`} alt={`${name} ${selectedSide}`} className="w-full h-full object-cover" />

@@ -9,7 +9,7 @@ const filters = [
   { slug: 'dresses', label: 'Dresses' },
   { slug: 'tops', label: 'Tops' },
   { slug: 'crop-tops', label: 'Crop Tops' },
-  { slug: 'boho-skirts', label: 'Boho Skirts' },
+  { slug: 'boho-skirts', label: 'Skirt / Boho Skirts' },
   { slug: 'trousers', label: 'Trousers' },
   { slug: 'palazzo', label: 'Palazzo / Official' },
   { slug: 'jumpsuit', label: 'Jumpsuit' },

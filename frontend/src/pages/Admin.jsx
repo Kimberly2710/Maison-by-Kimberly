@@ -5,7 +5,7 @@ const CAT_LABELS = {
   dresses: 'Dresses',
   tops: 'Tops',
   'crop-tops': 'Crop Tops',
-  'boho-skirts': 'Boho Skirts',
+  'boho-skirts': 'Skirt / Boho Skirts',
   trousers: 'Trousers',
   palazzo: 'Palazzo / Official',
   jumpsuit: 'Jumpsuit',
@@ -29,8 +29,11 @@ export default function Admin() {
   const [description, setDescription] = useState('')
   const [frontImageFile, setFrontImageFile] = useState(null)
   const [backImageFile, setBackImageFile] = useState(null)
+  const [videoFile, setVideoFile] = useState(null)
+  const [videoUrl, setVideoUrl] = useState('')
   const [frontPreview, setFrontPreview] = useState(null)
   const [backPreview, setBackPreview] = useState(null)
+  const [videoPreview, setVideoPreview] = useState(null)
   const [editingProductId, setEditingProductId] = useState(null)
   const [isNewArrival, setIsNewArrival] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -60,8 +63,11 @@ export default function Admin() {
     setDescription('')
     setFrontImageFile(null)
     setBackImageFile(null)
+    setVideoFile(null)
+    setVideoUrl('')
     setFrontPreview(null)
     setBackPreview(null)
+    setVideoPreview(null)
     setIsNewArrival(false)
   }
 
@@ -87,8 +93,11 @@ export default function Admin() {
     setIsNewArrival(!!product.is_new_arrival)
     setFrontImageFile(null)
     setBackImageFile(null)
+    setVideoFile(null)
+    setVideoUrl(product.video_url || '')
     setFrontPreview(product.front_image ? `/uploads/${product.front_image}` : product.image ? `/uploads/${product.image}` : null)
     setBackPreview(product.back_image ? `/uploads/${product.back_image}` : null)
+    setVideoPreview(product.video_file ? `/uploads/${product.video_file}` : product.video_url || null)
   }
 
   function handleCancelEdit() {
@@ -141,6 +150,13 @@ export default function Admin() {
     setBackPreview(URL.createObjectURL(file))
   }
 
+  function handleVideoFileChange(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setVideoFile(file)
+    setVideoPreview(URL.createObjectURL(file))
+  }
+
   function handleSlideImageChange(e) {
     const file = e.target.files[0]
     if (!file) return
@@ -165,6 +181,8 @@ export default function Admin() {
     formData.append('is_new_arrival', isNewArrival ? '1' : '0')
     if (frontImageFile) formData.append('front_image', frontImageFile)
     if (backImageFile) formData.append('back_image', backImageFile)
+    if (videoFile) formData.append('video_file', videoFile)
+    if (videoUrl.trim()) formData.append('video_url', videoUrl.trim())
 
     try {
       if (editingProductId) {
@@ -377,7 +395,7 @@ export default function Admin() {
                   <option value="dresses">Dresses</option>
                   <option value="tops">Tops</option>
                   <option value="crop-tops">Crop Tops</option>
-                  <option value="boho-skirts">Boho Skirts</option>
+                  <option value="boho-skirts">Skirt / Boho Skirts</option>
                   <option value="trousers">Trousers</option>
                   <option value="palazzo">Palazzo / Official Pants</option>
                   <option value="jumpsuit">Jumpsuit</option>
@@ -431,6 +449,29 @@ export default function Admin() {
                   rows={3}
                   className="w-full px-4 py-3 border border-blush-border rounded-xl bg-blush text-wine-deep text-sm outline-none focus:border-wine transition-colors resize-y"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-wine uppercase tracking-[0.5px] mb-1.5">Product video</label>
+                <input
+                  type="text"
+                  placeholder="Paste a video URL (YouTube, MP4, etc.)"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  className="w-full px-4 py-3 border border-blush-border rounded-xl bg-blush text-wine-deep text-sm outline-none focus:border-wine transition-colors mb-3"
+                />
+                <label className="block border-2 border-dashed border-blush-border rounded-xl p-6 text-center cursor-pointer hover:border-rose transition-colors bg-blush">
+                  {videoPreview ? (
+                    <video src={videoPreview} controls className="max-h-48 mx-auto rounded-lg w-full object-cover" />
+                  ) : (
+                    <>
+                      <span className="text-3xl block mb-2">🎬</span>
+                      <span className="text-xs text-wine-light">Upload a product video</span>
+                    </>
+                  )}
+                  <input type="file" accept="video/*" onChange={handleVideoFileChange} className="hidden" />
+                </label>
+                <p className="text-[11px] text-wine-light mt-2">Add a video link or upload an MP4/WebM file.</p>
               </div>
 
               {/* Photo Upload */}

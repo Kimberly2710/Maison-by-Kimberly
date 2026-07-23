@@ -26,6 +26,8 @@ db.connect((err) => {
       image VARCHAR(255),
       front_image VARCHAR(255),
       back_image VARCHAR(255),
+      video_url VARCHAR(255),
+      video_file VARCHAR(255),
       is_new_arrival TINYINT(1) DEFAULT 0,
       sold TINYINT(1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -44,6 +46,8 @@ db.connect((err) => {
   const addCols = `ALTER TABLE products
     ADD COLUMN IF NOT EXISTS front_image VARCHAR(255),
     ADD COLUMN IF NOT EXISTS back_image VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS video_url VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS video_file VARCHAR(255),
     ADD COLUMN IF NOT EXISTS is_new_arrival TINYINT(1) DEFAULT 0,
     ADD COLUMN IF NOT EXISTS sold TINYINT(1) DEFAULT 0`;
   db.query(addCols, (err) => {

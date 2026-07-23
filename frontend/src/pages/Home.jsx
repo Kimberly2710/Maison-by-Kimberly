@@ -40,7 +40,7 @@ const categories = [
   { slug: 'dresses', label: 'Dresses', icon: '👗' },
   { slug: 'tops', label: 'Tops', icon: '👚' },
   { slug: 'crop-tops', label: 'Crop Tops', icon: '✨' },
-  { slug: 'boho-skirts', label: 'Boho Skirts', icon: '🌸' },
+  { slug: 'boho-skirts', label: 'Skirt / Boho Skirts', icon: '🌸' },
   { slug: 'trousers', label: 'Trousers', icon: '👖' },
   { slug: 'palazzo', label: 'Palazzo / Official', icon: '💼' },
   { slug: 'jumpsuit', label: 'Jumpsuit', icon: '🧥' },
