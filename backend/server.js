@@ -13,9 +13,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const homepageRoutes = require('./routes/homepage');
+const orderRoutes = require('./routes/orders');
 app.use('/api/products', productRoutes);
 app.use('/api/homepage', homepageRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/orders', orderRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: '✦ Maison by Kimberly API running' });

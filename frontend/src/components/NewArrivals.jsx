@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function NewArrivals({ products = [] }) {
   return (
-    <section className="max-w-6xl mx-auto px-6 py-12">
+    <section className="mx-auto max-w-7xl px-6 py-12 sm:px-8 lg:px-12">
       <p className="section-eyebrow">Just In</p>
       <h2 className="section-title">New Arrivals</h2>
       {products.length > 0 ? (

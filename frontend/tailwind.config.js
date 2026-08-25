@@ -7,7 +7,7 @@ export default {
         wine: {
           DEFAULT: '#7A1040',
           deep: '#5a0f2e',
-          light: '#a0506a',
+          light: '#6b263e',
         },
         blush: {
           DEFAULT: '#FDF4F7',

@@ -8,7 +8,7 @@
   body {
     font-family: 'Montserrat', sans-serif;
     background: linear-gradient(180deg, #7A1040 0%, #F7E8EE 55%, #FDF4F7 100%);
-    color: #3a0f20;
+    color: #2b1720;
     overflow-x: hidden;
   }
   a {
@@ -28,11 +28,11 @@
     padding: 1rem 2.25rem;
     border-radius: 9999px;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     transition-property: all;
-    transition-duration: 200ms;
+    transition-duration: 350ms;
   }
   .btn-primary:hover {
     background: #5a0f2e;
@@ -40,23 +40,23 @@
   }
   .btn-outline {
     display: inline-block;
-    border: 1px solid #7A1040;
+    border: 2px solid #7A1040;
     color: #7A1040;
     padding: 1rem 2.25rem;
     border-radius: 9999px;
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     transition-property: all;
-    transition-duration: 200ms;
+    transition-duration: 350ms;
   }
   .btn-outline:hover {
     background: #7A1040;
     color: #fff;
   }
   .section-eyebrow {
-    color: #c47090;
+    color: #7A1040;
     font-size: 0.75rem;
     letter-spacing: 0.25em;
     text-transform: uppercase;
@@ -70,7 +70,7 @@
     text-align: center;
     margin-bottom: 3rem;
     font-size: clamp(28px, 4vw, 42px);
-    font-weight: 300;
+    font-weight: 600;
   }
 }
 
@@ -87,3 +87,12 @@
   scrollbar-width: none;
 }
 .filter-scroll::-webkit-scrollbar { display: none; }
+
+@keyframes heroFade {
+  from { opacity: 0.35; transform: scale(1.015); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.hero-slide {
+  animation: heroFade 1.2s ease-in-out;
+}

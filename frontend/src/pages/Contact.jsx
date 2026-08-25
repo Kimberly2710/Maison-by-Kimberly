@@ -7,12 +7,14 @@ export default function Contact() {
   ]
 
   return (
-    <>
-      <div className="bg-blush border-b border-blush-border pt-[120px] pb-10 text-center px-6">
-        <h1 className="font-script text-black" style={{fontSize:'clamp(48px,8vw,80px)'}}>Contact Kim</h1>
+    <div className="bg-gradient-to-b from-rose-500/20 via-slate-50 to-white">
+      <div className="border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 text-center sm:py-16">
+        <p className="section-eyebrow mb-3">Let's connect</p>
+        <h1 className="font-serif text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Contact Kim</h1>
       </div>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
+      <section className="bg-white px-6 py-20 sm:py-24">
+        <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div>
             <p className="font-serif italic text-black text-lg leading-relaxed mb-8">
@@ -62,7 +64,8 @@ export default function Contact() {
             </p>
           </div>
         </div>
+        </div>
       </section>
-    </>
+    </div>
   )
 }

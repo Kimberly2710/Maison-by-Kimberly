@@ -24,27 +24,28 @@ export default function HeroSlider({ slides }) {
   const isInternal = actionLink.startsWith('/')
 
   return (
-    <section aria-label={`Homepage slider. Slide ${activeIndex + 1} of ${slides.length}`} className="relative overflow-hidden rounded-[2.5rem] border border-blush-border bg-wine/5 shadow-[0_30px_90px_rgba(122,16,64,0.08)]">
+    <section aria-label={`Homepage slider. Slide ${activeIndex + 1} of ${slides.length}`} className="relative overflow-hidden">
       <div
-        className="relative h-[520px] sm:h-[600px] bg-cover bg-center bg-no-repeat"
+        key={activeIndex}
+        className="hero-slide relative h-[520px] sm:h-[600px] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: imageUrl
-            ? `linear-gradient(rgba(13, 7, 12, 0.5), rgba(13, 7, 12, 0.5)), url(${imageUrl})`
-            : `linear-gradient(180deg, rgba(122,16,64,.35), rgba(25,8,23,.65))`,
+            ? `linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)), url(${imageUrl})`
+            : `linear-gradient(180deg, rgba(255,255,255,.8), rgba(248,250,252,.95))`,
         }}
         aria-label={slide.alt_text || slide.title || 'Slide image'}
       >
-        <div className="absolute inset-0 bg-wine/20" />
-        <div className="relative z-10 h-full flex flex-col justify-end p-6 sm:p-12 text-white">
+        <div className="absolute inset-0 bg-white/10" />
+        <div className="relative z-10 h-full flex flex-col justify-end p-6 sm:p-12 text-slate-900">
           <div className="absolute top-6 left-6 z-20 text-left">
-            <p className="text-xs uppercase tracking-widest text-white/80">Welcome</p>
-            <h2 className="font-script text-2xl sm:text-3xl text-white/95">Welcome to Maison by Kimberly</h2>
+            <p className="text-sm font-semibold uppercase tracking-widest text-pink-600">Welcome</p>
+            <h2 className="font-script text-2xl font-medium text-slate-900 sm:text-3xl">Welcome to Maison by Kimberly</h2>
           </div>
-          <span className="section-eyebrow text-white/80">{slide.label}</span>
-          <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl leading-tight max-w-3xl">
+          <span className="section-eyebrow text-pink-600">{slide.label}</span>
+          <h1 className="max-w-3xl font-serif text-4xl leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
             {slide.title}
           </h1>
-          <p className="mt-4 max-w-2xl text-sm sm:text-base text-white/80 leading-relaxed">
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-700 sm:text-base">
             {slide.description}
           </p>
           {isInternal ? (

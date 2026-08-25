@@ -21,18 +21,18 @@ export default function Footer() {
   const showPhone = location.pathname !== '/contact'
 
   return (
-    <footer className="bg-[#f7e8ee] text-black">
+    <footer className="mt-8 border-t border-slate-200/60 bg-white text-slate-900">
       <div className="max-w-6xl mx-auto px-6 py-10 sm:py-12">
-        <div className="grid grid-cols-1 gap-8 border-b border-black/10 pb-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+        <div className="grid grid-cols-1 gap-8 border-b border-slate-200 pb-8 md:grid-cols-4">
           <div>
-            <p className="font-script text-3xl text-black mb-2">Maison by Kimberly</p>
-            <p className="text-sm leading-6 text-black/80">Luxury thrift collection with timeless style, carefully sourced in Mombasa, Kenya.</p>
+            <p className="mb-2 font-script text-3xl text-slate-900">Maison by Kimberly</p>
+            <p className="text-sm leading-relaxed text-slate-700">Luxury thrift collection with timeless style, carefully sourced in Mombasa, Kenya.</p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-black/70">Explore</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-900">Explore</p>
             {[['/', 'Home'], ['/shop', 'Shop'], ['/about', 'About'], ['/contact', 'Contact']].map(([to, label]) => (
-              <Link key={to} to={to} className="text-sm text-black/85 hover:text-black transition-colors">
+              <Link key={to} to={to} className="text-sm font-semibold text-slate-700 transition-colors hover:text-wine">
                 {label}
               </Link>
             ))}
@@ -42,20 +42,23 @@ export default function Footer() {
             {showPhone && (
               <a
                 href="tel:+254757866002"
-                className="inline-flex items-center gap-2 text-sm text-black/90 hover:text-black transition-colors"
+                className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition-colors hover:text-wine"
               >
                 <span className="text-base">📞</span>
                 <span>Call +254 757 866 002</span>
               </a>
             )}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-900">Find us on</p>
             <div className="mt-1 flex flex-col gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-black/70">Find us on</p>
               <div className="flex flex-wrap items-center gap-3">
                 <a
                   href="https://www.instagram.com/maison_by_kimberly?igsh=MTdyNm1lMGtvNW53MA=="
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white/80 px-3 py-2 text-sm text-black/90 transition-colors hover:bg-white hover:text-black"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition-colors hover:text-wine"
                 >
                   <SocialIcon type="instagram" />
                   <span>Instagram</span>
@@ -64,7 +67,7 @@ export default function Footer() {
                   href="https://www.tiktok.com/@maison_by_kimberly?_r=1&_t=ZS-97rKkFU21Ar"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-white/80 px-3 py-2 text-sm text-black/90 transition-colors hover:bg-white hover:text-black"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition-colors hover:text-wine"
                 >
                   <SocialIcon type="tiktok" />
                   <span>TikTok</span>
@@ -74,7 +77,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <p className="pt-6 text-center text-xs uppercase tracking-[0.28em] text-black/70">
+        <p className="pt-6 text-center text-xs font-medium uppercase tracking-wider text-slate-500">
           © 2025 Maison by Kimberly · Kimberly Jahenda · Thank you for shopping with us ✦
         </p>
       </div>

@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useCart } from '../context/useCart'
 
 const WHATSAPP = '254781245686'
 
@@ -16,7 +17,9 @@ const CAT_LABELS = {
 export default function ProductCard({ product }) {
   const { name, category, price, size, description, image, front_image, back_image, video_url, video_file, sold } = product
   const [viewOpen, setViewOpen] = useState(false)
+  const [added, setAdded] = useState(false)
   const [selectedSide, setSelectedSide] = useState(front_image ? 'front' : 'back')
+  const { addToCart } = useCart()
 
   const previewImage = image || front_image || back_image
   const displayImage = selectedSide === 'back' ? back_image || front_image || image : front_image || image || back_image
@@ -29,8 +32,8 @@ export default function ProductCard({ product }) {
 
   return (
     <>
-      <div className="bg-white border border-blush-border rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl group">
-        <div className="relative aspect-[3/4] overflow-hidden bg-blush">
+      <div className="group overflow-hidden bg-transparent transition-all duration-200 hover:-translate-y-1">
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100">
           {previewImage ? (
             <img
               src={`/uploads/${previewImage}`}
@@ -60,33 +63,39 @@ export default function ProductCard({ product }) {
             </span>
           )}
         </div>
-        <div className="p-5">
-          <h3 className="font-serif text-lg text-wine-deep mb-1">{name}</h3>
+        <div className="px-1 pt-4">
+          <h3 className="text-sm font-medium text-slate-900">{name}</h3>
+          <span className="mt-1 block text-sm text-slate-500">KSh {Number(price).toLocaleString()}</span>
           {size && (
-            <p className="text-xs text-wine mb-2">Size: {size}</p>
+            <p className="mb-2 mt-2 text-xs text-slate-600">Size: {size}</p>
           )}
           {description && (
-            <p className="text-xs text-[#6b5060] mb-4 line-clamp-2 leading-relaxed">
+            <p className="mb-4 mt-2 line-clamp-2 text-xs leading-relaxed text-slate-600">
               {description}
             </p>
           )}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-lg font-semibold text-wine">
-              KSh {Number(price).toLocaleString()}
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
             {sold ? (
               <button className="bg-rose text-white text-[11px] font-medium px-4 py-2 rounded-full tracking-wide cursor-not-allowed opacity-80 whitespace-nowrap">
                 Sold
               </button>
             ) : (
-              <a
-                href={waLink}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-wine text-white text-[11px] font-medium px-4 py-2 rounded-full tracking-wide hover:bg-wine-deep transition-colors whitespace-nowrap"
-              >
-                Order via WhatsApp
-              </a>
+              <>
+                <a href={waLink} target="_blank" rel="noreferrer" className="rounded-full bg-wine px-3 py-2 text-[11px] font-medium tracking-wide text-white transition-colors hover:bg-wine-deep">
+                  Chat on WhatsApp
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    addToCart(product)
+                    setAdded(true)
+                    window.setTimeout(() => setAdded(false), 1800)
+                  }}
+                  className="rounded-full border border-pink-600 px-3 py-2 text-[11px] font-semibold tracking-wide text-pink-600 transition-colors hover:bg-pink-600 hover:text-white"
+                >
+                  {added ? 'Added to cart' : 'Add to Cart'}
+                </button>
+              </>
             )}
           </div>
         </div>

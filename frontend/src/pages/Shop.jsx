@@ -32,21 +32,22 @@ export default function Shop() {
   }, [activecat])
 
   return (
-    <>
-      <div className="bg-blush border-b border-blush-border pt-[120px] pb-10 text-center px-6">
-        <h1 className="font-script text-black" style={{fontSize:'clamp(48px,8vw,80px)'}}>Shop</h1>
+    <div className="bg-gradient-to-b from-rose-500/20 via-slate-50 to-white">
+      <div className="border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 text-center sm:py-16">
+        <p className="section-eyebrow mb-3">The Maison edit</p>
+        <h1 className="font-serif text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Shop</h1>
       </div>
 
-      <div className="sticky top-[68px] z-40 bg-white/95 backdrop-blur-sm border-b border-blush-border px-6">
-        <div className="max-w-6xl mx-auto flex gap-2 overflow-x-auto py-3 filter-scroll">
+      <div className="sticky top-[76px] z-40 border-b border-slate-200/60 bg-white/90 px-6 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 py-5 sm:gap-6">
           {filters.map(f => (
             <button
               key={f.slug}
               onClick={() => setSearchParams(f.slug === 'all' ? {} : { cat: f.slug })}
-              className={`px-4 py-2 rounded-full text-xs font-medium tracking-wide whitespace-nowrap border transition-all duration-200
+              className={`border-b-2 pb-1 text-xs font-medium tracking-wide transition-colors duration-200
                 ${activecat === f.slug
-                  ? 'bg-wine border-wine text-white'
-                  : 'bg-transparent border-blush-border text-wine hover:border-wine hover:text-wine'
+                  ? 'border-pink-600 font-semibold text-pink-600'
+                  : 'border-transparent text-slate-600 hover:border-pink-300 hover:text-pink-500'
                 }`}
             >
               {f.label}
@@ -55,7 +56,8 @@ export default function Shop() {
         </div>
       </div>
 
-      <section className="max-w-6xl mx-auto px-6 py-12">
+      <section className="bg-white px-6 py-16">
+        <div className="max-w-6xl mx-auto">
         {loading ? (
           <div className="text-center py-20 text-wine text-sm">Loading pieces... ✦</div>
         ) : products.length > 0 ? (
@@ -69,9 +71,10 @@ export default function Shop() {
             <p className="text-sm">Follow <strong>@maison_by_kimberly</strong> on Instagram for first looks 💕</p>
           </div>
         )}
+        </div>
       </section>
 
       <PolicyStrip />
-    </>
+    </div>
   )
 }
