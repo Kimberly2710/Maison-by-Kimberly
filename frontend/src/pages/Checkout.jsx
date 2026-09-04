@@ -15,6 +15,7 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('mpesa')
   const [status, setStatus] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const isMombasa = customer.city === 'Mombasa'
   const total = subtotal + (items.length ? deliveryFee : 0)
 
@@ -27,53 +28,90 @@ export default function Checkout() {
     }
   }
 
-  async function placeOrder(event) {
+  async function requestMpesaStkPush() {
+    const response = await axios.post('/api/payments/stk-push', {
+      phone: customer.phone.trim(),
+      amount: total,
+      currency: 'KES',
+      description: `Maison by Kimberly order for ${email.trim()}`,
+    })
+
+    if (!response.data?.checkoutRequestId) {
+      throw new Error('The M-Pesa provider did not return a checkout request')
+    }
+
+    const payment = await axios.get(`/api/payments/stk-push/${encodeURIComponent(response.data.checkoutRequestId)}`)
+    if (payment.data?.status !== 'success') {
+      throw new Error(payment.data?.message || 'M-Pesa payment was not completed')
+    }
+  }
+
+  async function sendInvoiceEmail() {
+    return axios.post('/api/orders', { email: email.trim(), customer, paymentMethod, items, subtotal, deliveryFee, total })
+  }
+
+  async function handlePlaceOrder(event) {
     event.preventDefault()
     if (!items.length) return
+    if (!email.trim() || !customer.phone.trim() || !customer.address.trim()) {
+      setStatus('Please complete your email, phone number, and delivery address before placing your order.')
+      return
+    }
+
     setSubmitting(true)
     setStatus('')
     try {
-      await axios.post('/api/orders', { email, customer, paymentMethod, items, subtotal, deliveryFee, total })
-      clearCart()
-      navigate('/contact?order=confirmed')
+      if (paymentMethod === 'mpesa') {
+        await requestMpesaStkPush()
+      }
+      await sendInvoiceEmail()
+      setShowSuccessModal(true)
     } catch (error) {
-      setStatus(error.response?.data?.error || 'We could not place the order. Please try again.')
+      setStatus(error.response?.data?.error || error.message || 'We could not place the order. Please try again.')
     } finally {
       setSubmitting(false)
     }
   }
 
+  function continueShopping() {
+    clearCart()
+    navigate('/shop')
+  }
+
   if (!items.length) {
     return (
-      <div className="min-h-[70vh] bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-24 text-center">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-pink-600">Your selection</p>
-        <h1 className="font-serif text-4xl text-slate-900">Your cart is empty</h1>
+      <div className="min-h-[70vh] bg-gradient-to-b from-rose-500/20 via-slate-50 to-white text-center">
+        <div className="border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 sm:py-16">
+          <p className="mb-2 block text-xs font-semibold uppercase tracking-wider text-pink-600">Your selection</p>
+          <h1 className="font-serif text-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl">Your cart is empty</h1>
+        </div>
         <Link to="/shop" className="btn-primary mt-8">Browse the edit</Link>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 sm:px-8 lg:px-12">
+    <div className="min-h-screen bg-gradient-to-b from-rose-500/20 via-slate-50 to-white">
+      <div className="border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 text-center sm:py-16">
+        <p className="mb-2 block text-xs font-semibold uppercase tracking-wider text-pink-600">Secure checkout</p>
+        <h1 className="font-serif text-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl">Complete your order</h1>
+      </div>
       <div className="mx-auto max-w-7xl">
-        <div className="mb-10">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-pink-600">Secure checkout</p>
-          <h1 className="font-serif text-5xl leading-tight text-slate-900">Complete your order</h1>
-          <p className="mt-3 text-sm text-slate-600">Enter your email to receive your invoice and order updates.</p>
-        </div>
+        <p className="mt-6 px-6 pb-2 pt-4 text-center text-sm text-slate-600 sm:px-8 lg:px-12">Enter your email to receive your invoice and order updates.</p>
+        {status && <div className="mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700 sm:mx-8 lg:mx-12" role="alert">{status}</div>}
 
-        <form onSubmit={placeOrder} className="grid gap-8 lg:grid-cols-[1fr_380px]">
+        <form onSubmit={handlePlaceOrder} className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[1fr_380px] lg:px-12">
           <div className="space-y-6">
             <section className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm sm:p-8">
               <h2 className="mb-5 font-serif text-2xl text-slate-900">1. Your details</h2>
-              <label className="mb-5 block text-sm font-medium text-slate-700">Email address
+              <label className="mb-5 block text-slate-700"><span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Email address</span>
                 <input required type="email" value={email} onChange={event => setEmail(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-pink-500" placeholder="you@example.com" />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
                   ['firstName', 'First name'], ['lastName', 'Last name'], ['phone', 'Phone number'],
                 ].map(([name, label]) => (
-                  <label key={name} className="text-sm font-medium text-slate-700">{label}
+                  <label key={name} className="text-slate-700"><span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">{label}</span>
                     <input required name={name} value={customer[name]} onChange={updateCustomer} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-pink-500" />
                   </label>
                 ))}
@@ -83,7 +121,7 @@ export default function Checkout() {
                   </select>
                 </label>
               </div>
-              <label className="mt-4 block text-sm font-medium text-slate-700">Delivery address
+                <label className="mt-4 block text-slate-700"><span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-700">Delivery address</span>
                 <textarea required name="address" value={customer.address} onChange={updateCustomer} rows="3" className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 outline-none focus:border-pink-500" />
               </label>
             </section>
@@ -121,11 +159,22 @@ export default function Checkout() {
               ))}
             </div>
             <div className="space-y-3 py-5 text-sm text-slate-600"><p className="flex justify-between"><span>Subtotal</span><span>KSh {subtotal.toLocaleString()}</span></p><p className="flex justify-between"><span>Delivery</span><span>{deliveryFee === 0 ? 'Free' : `KSh ${deliveryFee.toLocaleString()}`}</span></p></div>
-            <p className="flex justify-between border-t border-slate-200 pt-5 text-lg font-bold text-slate-900"><span>Total to Pay</span><span>KSh {total.toLocaleString()}</span></p>
-            <button disabled={submitting} className="btn-primary mt-6 w-full disabled:cursor-not-allowed disabled:opacity-60">{submitting ? 'Placing order...' : 'Confirm & Place Order'}</button>
+            <p className="flex justify-between border-t border-slate-200 pt-5 text-lg font-bold text-slate-900"><span>Total to Pay</span><span className="text-xl font-black tracking-tight text-slate-950">KSh {total.toLocaleString()}</span></p>
+            <button type="button" onClick={handlePlaceOrder} disabled={submitting} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-60">{submitting ? 'Sending M-Pesa Prompt...' : 'Confirm & Place Order'}</button>
           </aside>
         </form>
       </div>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="order-success-title">
+          <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white p-8 text-center shadow-2xl">
+            <p className="text-3xl text-pink-600" aria-hidden="true">✦</p>
+            <h2 id="order-success-title" className="mt-3 font-serif text-3xl font-bold text-slate-900">Your order has been received!</h2>
+            <p className="mt-4 text-sm leading-relaxed text-slate-600">Thank you for shopping with Maison by Kimberly.</p>
+            <button type="button" onClick={continueShopping} className="btn-primary mt-8 w-full">Continue Shopping</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

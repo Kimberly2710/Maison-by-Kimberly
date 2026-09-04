@@ -19,12 +19,13 @@ export function CartProvider({ children }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
-  function addToCart(product) {
+  function addToCart(product, quantity = 1) {
     if (product.sold) return
+    const amount = Math.max(1, Number(quantity) || 1)
     setItems(current => {
       const existing = current.find(item => item.id === product.id)
       if (existing) {
-        return current.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item)
+        return current.map(item => item.id === product.id ? { ...item, quantity: item.quantity + amount } : item)
       }
       return [...current, {
         id: product.id,
@@ -32,7 +33,7 @@ export function CartProvider({ children }) {
         price: Number(product.price),
         size: product.size || '',
         image: product.image || product.front_image || product.back_image || '',
-        quantity: 1,
+        quantity: amount,
       }]
     })
   }

@@ -18,6 +18,7 @@ export default function ProductCard({ product }) {
   const { name, category, price, size, description, image, front_image, back_image, video_url, video_file, sold } = product
   const [viewOpen, setViewOpen] = useState(false)
   const [added, setAdded] = useState(false)
+  const [quantity, setQuantity] = useState(1)
   const [selectedSide, setSelectedSide] = useState(front_image ? 'front' : 'back')
   const { addToCart } = useCart()
 
@@ -30,10 +31,15 @@ export default function ProductCard({ product }) {
   )
   const waLink = `https://wa.me/${WHATSAPP}?text=${waMessage}`
 
+  function openDetails() {
+    setQuantity(1)
+    setViewOpen(true)
+  }
+
   return (
     <>
       <div className="group overflow-hidden bg-transparent transition-all duration-200 hover:-translate-y-1">
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100">
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100 cursor-pointer" onClick={openDetails} role="button" tabIndex="0" onKeyDown={event => (event.key === 'Enter' || event.key === ' ') && openDetails()}>
           {previewImage ? (
             <img
               src={`/uploads/${previewImage}`}
@@ -45,17 +51,11 @@ export default function ProductCard({ product }) {
               ✦
             </div>
           )}
-          <div className="absolute inset-0 flex flex-col justify-between p-3">
+          <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-3">
             <span className="bg-blush/90 text-wine text-[10px] font-semibold tracking-[1.5px] uppercase px-3 py-1 rounded-full border border-blush-border">
               {CAT_LABELS[category] || category}
             </span>
-            <button
-              type="button"
-              onClick={() => setViewOpen(true)}
-              className="self-start bg-white/90 text-wine text-[11px] font-semibold px-3 py-2 rounded-full border border-blush-border hover:bg-white transition-colors"
-            >
-              View item
-            </button>
+            <span className="self-start rounded-full border border-blush-border bg-white/90 px-3 py-2 text-[11px] font-semibold text-wine">View item</span>
           </div>
           {sold && (
             <span className="absolute top-3 right-3 bg-rose text-white text-[10px] font-semibold tracking-[1.5px] uppercase px-3 py-1 rounded-full border border-rose/70">
@@ -64,7 +64,7 @@ export default function ProductCard({ product }) {
           )}
         </div>
         <div className="px-1 pt-4">
-          <h3 className="text-sm font-medium text-slate-900">{name}</h3>
+          <button type="button" onClick={openDetails} className="text-left text-sm font-medium text-slate-900 transition-colors hover:text-pink-600">{name}</button>
           <span className="mt-1 block text-sm text-slate-500">KSh {Number(price).toLocaleString()}</span>
           {size && (
             <p className="mb-2 mt-2 text-xs text-slate-600">Size: {size}</p>
@@ -86,7 +86,8 @@ export default function ProductCard({ product }) {
                 </a>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(event) => {
+                    event.stopPropagation()
                     addToCart(product)
                     setAdded(true)
                     window.setTimeout(() => setAdded(false), 1800)
@@ -170,6 +171,21 @@ export default function ProductCard({ product }) {
                     <div className="rounded-2xl bg-rose/10 px-4 py-3 text-sm font-semibold text-rose">
                       This item has been marked sold.
                     </div>
+                  )}
+                  {!sold && (
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                      <span className="text-sm font-semibold text-slate-700">Quantity</span>
+                      <div className="flex items-center gap-3">
+                        <button type="button" aria-label={`Decrease quantity for ${name}`} onClick={() => setQuantity(current => Math.max(1, current - 1))} className="h-9 w-9 rounded-full border border-slate-300 text-lg font-semibold text-slate-700 hover:border-pink-500 hover:text-pink-600">-</button>
+                        <span aria-live="polite" className="w-5 text-center font-bold text-slate-900">{quantity}</span>
+                        <button type="button" aria-label={`Increase quantity for ${name}`} onClick={() => setQuantity(current => current + 1)} className="h-9 w-9 rounded-full border border-slate-300 text-lg font-semibold text-slate-700 hover:border-pink-500 hover:text-pink-600">+</button>
+                      </div>
+                    </div>
+                  )}
+                  {!sold && (
+                    <button type="button" onClick={() => { addToCart(product, quantity); setViewOpen(false); setQuantity(1) }} className="block w-full rounded-2xl bg-pink-600 px-4 py-3 text-center text-sm font-bold text-white transition hover:bg-pink-700">
+                      Add {quantity} {quantity === 1 ? 'item' : 'items'} to Cart
+                    </button>
                   )}
                   <Link
                     to="/contact"
