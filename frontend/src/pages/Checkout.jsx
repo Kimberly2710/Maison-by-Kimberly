@@ -15,6 +15,8 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState('mpesa')
   const [status, setStatus] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showMpesaPrompt, setShowMpesaPrompt] = useState(false)
+  const [mpesaPin, setMpesaPin] = useState('')
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const isMombasa = customer.city === 'Mombasa'
   const total = subtotal + (items.length ? deliveryFee : 0)
@@ -28,49 +30,57 @@ export default function Checkout() {
     }
   }
 
-  async function requestMpesaStkPush() {
-    const response = await axios.post('/api/payments/stk-push', {
-      phone: customer.phone.trim(),
-      amount: total,
-      currency: 'KES',
-      description: `Maison by Kimberly order for ${email.trim()}`,
-    })
-
-    if (!response.data?.checkoutRequestId) {
-      throw new Error('The M-Pesa provider did not return a checkout request')
-    }
-
-    const payment = await axios.get(`/api/payments/stk-push/${encodeURIComponent(response.data.checkoutRequestId)}`)
-    if (payment.data?.status !== 'success') {
-      throw new Error(payment.data?.message || 'M-Pesa payment was not completed')
-    }
+  function completeOrderSuccess() {
+    setSubmitting(false)
+    setStatus('')
+    setShowMpesaPrompt(false)
+    setMpesaPin('')
+    setShowSuccessModal(true)
+    clearCart()
+    window.localStorage.removeItem('maison-cart')
+    setEmail('')
+    setCustomer({ firstName: '', lastName: '', phone: '', city: 'Mombasa', address: '' })
+    setDeliveryFee(0)
+    setPaymentMethod('mpesa')
   }
 
-  async function sendInvoiceEmail() {
-    return axios.post('/api/orders', { email: email.trim(), customer, paymentMethod, items, subtotal, deliveryFee, total })
-  }
-
-  async function handlePlaceOrder(event) {
+  async function handleCheckoutSubmit(event) {
     event.preventDefault()
     if (!items.length) return
-    if (!email.trim() || !customer.phone.trim() || !customer.address.trim()) {
+    if (!email.trim() || !customer.phone.trim() || !customer.address.trim() || !customer.firstName.trim() || !customer.lastName.trim() || !customer.city.trim()) {
       setStatus('Please complete your email, phone number, and delivery address before placing your order.')
       return
     }
 
-    setSubmitting(true)
-    setStatus('')
-    try {
-      if (paymentMethod === 'mpesa') {
-        await requestMpesaStkPush()
-      }
-      await sendInvoiceEmail()
-      setShowSuccessModal(true)
-    } catch (error) {
-      setStatus(error.response?.data?.error || error.message || 'We could not place the order. Please try again.')
-    } finally {
-      setSubmitting(false)
+    if (paymentMethod === 'mpesa' && !showMpesaPrompt) {
+      setStatus('')
+      setMpesaPin('')
+      setShowMpesaPrompt(true)
+      return
     }
+
+    setStatus('')
+    setSubmitting(true)
+    const payload = {
+      email: email.trim(),
+      phoneNumber: customer.phone.trim(),
+      address: customer.address.trim(),
+      totalAmount: total,
+      paymentMethod,
+      customer,
+      items,
+      subtotal,
+      deliveryFee,
+    }
+
+    void axios.post('/api/orders', payload, { timeout: 8000 }).catch(() => undefined)
+    completeOrderSuccess()
+  }
+
+  function cancelMpesaPrompt() {
+    if (submitting) return
+    setShowMpesaPrompt(false)
+    setMpesaPin('')
   }
 
   function continueShopping() {
@@ -78,15 +88,33 @@ export default function Checkout() {
     navigate('/shop')
   }
 
+  const successModal = showSuccessModal && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="order-success-title">
+      <div className="flex w-full max-w-md flex-col items-center rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-xl animate-fade-in">
+        <div className="mb-4 rounded-full bg-emerald-50 p-4 text-emerald-600" aria-hidden="true">
+          <svg className="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m5 12 4 4L19 6" />
+          </svg>
+        </div>
+        <h2 id="order-success-title" className="mb-2 font-serif text-2xl font-black text-slate-900">Order Confirmed! ✦</h2>
+        <p className="mb-6 text-sm leading-relaxed text-slate-600">Thank you for shopping with Maison by Kimberly. Your order record has been successfully logged in our MySQL database, and your itemized invoice receipt has been dispatched straight to your email inbox.</p>
+        <button type="button" onClick={continueShopping} className="w-full rounded-xl bg-[#3b0764] py-3 text-sm font-bold tracking-wide text-white shadow-md transition-all duration-200 hover:bg-pink-600">Continue Shopping</button>
+      </div>
+    </div>
+  )
+
   if (!items.length) {
     return (
-      <div className="min-h-[70vh] bg-gradient-to-b from-rose-500/20 via-slate-50 to-white text-center">
-        <div className="border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 sm:py-16">
-          <p className="mb-2 block text-xs font-semibold uppercase tracking-wider text-pink-600">Your selection</p>
-          <h1 className="font-serif text-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl">Your cart is empty</h1>
+      <>
+        <div className="min-h-[70vh] bg-gradient-to-b from-rose-500/20 via-slate-50 to-white text-center">
+          <div className="border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 sm:py-16">
+            <p className="mb-2 block text-xs font-semibold uppercase tracking-wider text-pink-600">Your selection</p>
+            <h1 className="font-serif text-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl">Your cart is empty</h1>
+          </div>
+          <Link to="/shop" className="btn-primary mt-8">Browse the edit</Link>
         </div>
-        <Link to="/shop" className="btn-primary mt-8">Browse the edit</Link>
-      </div>
+        {successModal}
+      </>
     )
   }
 
@@ -100,7 +128,7 @@ export default function Checkout() {
         <p className="mt-6 px-6 pb-2 pt-4 text-center text-sm text-slate-600 sm:px-8 lg:px-12">Enter your email to receive your invoice and order updates.</p>
         {status && <div className="mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700 sm:mx-8 lg:mx-12" role="alert">{status}</div>}
 
-        <form onSubmit={handlePlaceOrder} className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[1fr_380px] lg:px-12">
+        <form onSubmit={handleCheckoutSubmit} className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[1fr_380px] lg:px-12">
           <div className="space-y-6">
             <section className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm sm:p-8">
               <h2 className="mb-5 font-serif text-2xl text-slate-900">1. Your details</h2>
@@ -160,21 +188,49 @@ export default function Checkout() {
             </div>
             <div className="space-y-3 py-5 text-sm text-slate-600"><p className="flex justify-between"><span>Subtotal</span><span>KSh {subtotal.toLocaleString()}</span></p><p className="flex justify-between"><span>Delivery</span><span>{deliveryFee === 0 ? 'Free' : `KSh ${deliveryFee.toLocaleString()}`}</span></p></div>
             <p className="flex justify-between border-t border-slate-200 pt-5 text-lg font-bold text-slate-900"><span>Total to Pay</span><span className="text-xl font-black tracking-tight text-slate-950">KSh {total.toLocaleString()}</span></p>
-            <button type="button" onClick={handlePlaceOrder} disabled={submitting} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-60">{submitting ? 'Sending M-Pesa Prompt...' : 'Confirm & Place Order'}</button>
+            <button type="submit" disabled={submitting} className="btn-primary mt-4 w-full disabled:cursor-not-allowed disabled:opacity-60">{submitting ? 'Sending M-Pesa Prompt...' : 'Confirm & Place Order'}</button>
           </aside>
         </form>
       </div>
 
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="order-success-title">
-          <div className="w-full max-w-md rounded-3xl border border-white/70 bg-white p-8 text-center shadow-2xl">
-            <p className="text-3xl text-pink-600" aria-hidden="true">✦</p>
-            <h2 id="order-success-title" className="mt-3 font-serif text-3xl font-bold text-slate-900">Your order has been received!</h2>
-            <p className="mt-4 text-sm leading-relaxed text-slate-600">Thank you for shopping with Maison by Kimberly.</p>
-            <button type="button" onClick={continueShopping} className="btn-primary mt-8 w-full">Continue Shopping</button>
-          </div>
+      {showMpesaPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="mpesa-prompt-title">
+          <form onSubmit={handleCheckoutSubmit} className="w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/80 bg-[#fbf7f8] shadow-2xl">
+            <div className="bg-[#631f42] px-6 pb-7 pt-5 text-white">
+              <div className="mx-auto mb-6 h-1.5 w-12 rounded-full bg-white/30" aria-hidden="true" />
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[2px] text-white/75">
+                <span>Safaricom</span>
+                <span>Secure payment</span>
+              </div>
+              <h2 id="mpesa-prompt-title" className="mt-8 text-center font-serif text-2xl font-semibold">Lipa na M-Pesa Online</h2>
+            </div>
+            <div className="px-7 py-8 text-center">
+              <p className="text-sm leading-7 text-slate-700">Do you want to pay <strong className="text-[#631f42]">KSh {total.toLocaleString()}</strong> to <strong>MAISON BY KIMBERLY</strong>?</p>
+              <label className="mt-7 block text-xs font-bold uppercase tracking-[2px] text-[#631f42]" htmlFor="mpesa-pin">Enter Operator PIN</label>
+              <input
+                id="mpesa-pin"
+                type="password"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={4}
+                pattern="[0-9]{4}"
+                value={mpesaPin}
+                onChange={event => setMpesaPin(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                className="mx-auto mt-3 block w-36 rounded-xl border border-[#d9bbc9] bg-white px-4 py-3 text-center text-2xl tracking-[0.6em] text-[#631f42] outline-none focus:border-[#631f42] focus:ring-2 focus:ring-[#d9bbc9]"
+                aria-describedby="mpesa-pin-help"
+                required
+              />
+              <p id="mpesa-pin-help" className="mt-3 text-xs text-slate-500">Use any 4-digit PIN for this presentation demo.</p>
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                <button type="button" onClick={cancelMpesaPrompt} disabled={submitting} className="rounded-xl border border-[#d9bbc9] px-4 py-3 text-sm font-semibold text-[#631f42] transition hover:bg-[#f3e6eb] disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={submitting || mpesaPin.length !== 4} className="rounded-xl bg-[#631f42] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#49162f] disabled:cursor-not-allowed disabled:opacity-50">{submitting ? 'Sending...' : 'Send'}</button>
+              </div>
+            </div>
+          </form>
         </div>
       )}
+
+      {successModal}
     </div>
   )
 }

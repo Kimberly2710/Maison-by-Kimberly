@@ -14,10 +14,14 @@ const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const homepageRoutes = require('./routes/homepage');
 const orderRoutes = require('./routes/orders');
+const checkoutRoutes = require('./routes/checkout');
+const adminRoutes = require('./routes/admin');
 app.use('/api/products', productRoutes);
 app.use('/api/homepage', homepageRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: '✦ Maison by Kimberly API running' });

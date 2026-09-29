@@ -1,6 +1,21 @@
 const express = require('express')
+const nodemailer = require('nodemailer')
 const router = express.Router()
 const db = require('../db')
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+})
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const OUTSIDE_MOMBASA_FEE = 300
@@ -11,7 +26,8 @@ function escapeHtml(value) {
 
 function validateOrder(order) {
   if (!order || !emailPattern.test(order.email || '')) return 'A valid customer email is required'
-  if (!order.customer?.firstName || !order.customer?.lastName || !order.customer?.phone || !order.customer?.city || !order.customer?.address) {
+  if (!order.phoneNumber || !order.address || !Number.isFinite(Number(order.totalAmount))) return 'Complete delivery details are required'
+  if (!order.customer?.firstName || !order.customer?.lastName || !order.customer?.city) {
     return 'Complete delivery details are required'
   }
   if (!Array.isArray(order.items) || order.items.length === 0) return 'At least one cart item is required'
@@ -21,24 +37,6 @@ function validateOrder(order) {
   return null
 }
 
-async function sendEmail({ to, subject, html }) {
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
-    throw new Error('Email service is not configured')
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM, to, subject, html }),
-  })
-
-  if (!response.ok) throw new Error(`Email provider returned ${response.status}`)
-  return response.json()
-}
-
 function itemRows(items) {
   return items.map(item => `<tr><td>${escapeHtml(item.name)}</td><td>${item.quantity}</td><td>KSh ${(Number(item.price) * item.quantity).toLocaleString()}</td></tr>`).join('')
 }
@@ -46,9 +44,12 @@ function itemRows(items) {
 router.post('/', async (req, res) => {
   const error = validateOrder(req.body)
   if (error) return res.status(400).json({ error })
-  if (!process.env.MERCHANT_NOTIFICATION_EMAIL) return res.status(503).json({ error: 'Merchant email is not configured' })
+  const merchantEmail = process.env.EMAIL_USER
 
   const { email, customer, items, paymentMethod } = req.body
+  const phoneNumber = String(req.body.phoneNumber).trim()
+  const address = String(req.body.address).trim()
+  const totalAmount = Number(req.body.totalAmount)
   const isMombasa = customer.city === 'Mombasa'
   if (paymentMethod === 'cod' && !isMombasa) return res.status(400).json({ error: 'Cash on Delivery is only available within Mombasa' })
 
@@ -68,17 +69,35 @@ router.post('/', async (req, res) => {
     const total = subtotal + deliveryFee
     const rows = itemRows(pricedItems)
     const deliveryLabel = deliveryFee === 0 ? 'Free' : `KSh ${deliveryFee.toLocaleString()}`
-    const buyerHtml = `<h1>Maison by Kimberly</h1><p>Thank you, ${escapeHtml(customer.firstName)}. We received your order.</p><table><tr><th>Item</th><th>Qty</th><th>Total</th></tr>${rows}</table><p>Subtotal: KSh ${subtotal.toLocaleString()}<br>Delivery: ${deliveryLabel}<br><strong>Total: KSh ${total.toLocaleString()}</strong></p><p>We will contact you at ${escapeHtml(customer.phone)} to confirm delivery.</p>`
-    const merchantHtml = `<h1>New Maison order</h1><p><strong>Buyer:</strong> ${escapeHtml(customer.firstName)} ${escapeHtml(customer.lastName)}<br><strong>Email:</strong> ${escapeHtml(email)}<br><strong>Phone:</strong> ${escapeHtml(customer.phone)}<br><strong>City:</strong> ${escapeHtml(customer.city)}<br><strong>Address:</strong> ${escapeHtml(customer.address)}<br><strong>Payment:</strong> ${escapeHtml(paymentMethod)}</p><table><tr><th>Item</th><th>Qty</th><th>Total</th></tr>${rows}</table><p><strong>Order total: KSh ${total.toLocaleString()}</strong></p>`
 
-    await Promise.all([
-      sendEmail({ to: [email], subject: 'Your Maison by Kimberly invoice', html: buyerHtml }),
-      sendEmail({ to: [process.env.MERCHANT_NOTIFICATION_EMAIL], subject: 'New Maison by Kimberly order', html: merchantHtml }),
-    ])
-    res.status(201).json({ success: true, message: 'Order confirmed and emails sent' })
-  } catch (sendError) {
-    console.error('Order email failed:', sendError.message)
-    res.status(502).json({ error: 'Order received, but confirmation email delivery failed' })
+    const [result] = await db.promise().query(
+      'INSERT INTO orders (email, phone_number, delivery_address, total_amount, payment_method, status) VALUES (?, ?, ?, ?, ?, ?)',
+      [email.trim(), phoneNumber, address, totalAmount || total, paymentMethod, 'pending']
+    )
+
+    try {
+      await Promise.all([
+        transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: email.trim(),
+          subject: 'Maison by Kimberly - Order Confirmation',
+          text: `Thank you, ${customer.firstName}, for your luxury purchase from Maison by Kimberly.\n\nYour order has been logged successfully.\nOrder reference: ${result.insertId}\nTotal amount: KSh ${total.toLocaleString()}\nPayment method: ${paymentMethod}\nDelivery address: ${address}\n\nWe will contact you at ${phoneNumber} to confirm delivery.`,
+        }),
+        transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: merchantEmail,
+          subject: 'NEW STORE ORDER RECEIVED',
+          text: `NEW STORE ORDER RECEIVED\n\nOrder reference: ${result.insertId}\nBuyer email: ${email}\nPhone number: ${phoneNumber}\nDelivery address: ${address}\nPayment method: ${paymentMethod}\nTotal amount: KSh ${total.toLocaleString()}\nDelivery fee: ${deliveryLabel}\n\nItems:\n${rows.replace(/<[^>]+>/g, ' ')}`,
+        }),
+      ])
+    } catch (mailError) {
+      console.error('Order email notifications failed:', mailError.message)
+    }
+
+    res.status(200).json({ success: true, message: 'Order captured' })
+  } catch (databaseError) {
+    console.error('Order database failed:', databaseError)
+    res.status(500).json({ error: 'We could not capture the order. Please try again.' })
   }
 })
 

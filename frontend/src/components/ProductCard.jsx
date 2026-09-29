@@ -55,11 +55,13 @@ export default function ProductCard({ product }) {
             <span className="bg-blush/90 text-wine text-[10px] font-semibold tracking-[1.5px] uppercase px-3 py-1 rounded-full border border-blush-border">
               {CAT_LABELS[category] || category}
             </span>
-            <span className="self-start rounded-full border border-blush-border bg-white/90 px-3 py-2 text-[11px] font-semibold text-wine">View item</span>
+            {!sold && (
+              <span className="self-start rounded-full border border-blush-border bg-white/90 px-3 py-2 text-[11px] font-semibold text-wine">View item</span>
+            )}
           </div>
           {sold && (
-            <span className="absolute top-3 right-3 bg-rose text-white text-[10px] font-semibold tracking-[1.5px] uppercase px-3 py-1 rounded-full border border-rose/70">
-              Sold
+            <span className="absolute bottom-3 left-3 bg-slate-900/90 text-white font-black text-2xs uppercase tracking-widest px-3 py-1 rounded-md shadow-md backdrop-blur-sm border border-white/10">
+              SOLD
             </span>
           )}
         </div>
@@ -76,9 +78,9 @@ export default function ProductCard({ product }) {
           )}
           <div className="flex flex-wrap items-center gap-2">
             {sold ? (
-              <button className="bg-rose text-white text-[11px] font-medium px-4 py-2 rounded-full tracking-wide cursor-not-allowed opacity-80 whitespace-nowrap">
-                Sold
-              </button>
+              <span className="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest text-center cursor-not-allowed select-none shadow-sm">
+                SOLD OUT
+              </span>
             ) : (
               <>
                 <a href={waLink} target="_blank" rel="noreferrer" className="rounded-full bg-wine px-3 py-2 text-[11px] font-medium tracking-wide text-white transition-colors hover:bg-wine-deep">
@@ -187,16 +189,19 @@ export default function ProductCard({ product }) {
                       Add {quantity} {quantity === 1 ? 'item' : 'items'} to Cart
                     </button>
                   )}
-                  <Link
-                    to="/contact"
-                    className={`block w-full text-center rounded-2xl px-4 py-3 text-sm font-semibold transition ${sold ? 'bg-gray-300 text-gray-700 cursor-not-allowed' : 'bg-wine text-white hover:bg-wine-deep'}`}
-                  >
-                    {sold ? 'Sold' : 'Buy Now'}
-                  </Link>
+                  {sold && (
+                    <button
+                      type="button"
+                      onClick={() => window.open(waLink, '_blank', 'noopener,noreferrer')}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-black text-sm tracking-wide text-center block transition-all"
+                    >
+                      Piece Sold - Message Kim for Similar Items
+                    </button>
+                  )}
                   {!sold && (
-                    <a href={waLink} target="_blank" rel="noreferrer" className="block text-center text-sm text-wine underline">
-                      Or order immediately on WhatsApp
-                    </a>
+                    <Link to="/contact" className="block w-full rounded-2xl bg-wine px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-wine-deep">
+                      Buy Now
+                    </Link>
                   )}
                 </div>
               </div>

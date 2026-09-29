@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 
 const CAT_LABELS = {
@@ -20,7 +20,10 @@ export default function Admin() {
   const [loginError, setLoginError] = useState('')
 
   const [products, setProducts] = useState([])
+  const [orders, setOrders] = useState([])
+  const [userSessions, setUserSessions] = useState([])
   const [toast, setToast] = useState('')
+  const [currentTab, setCurrentTab] = useState('products')
 
   const [name, setName] = useState('')
   const [category, setCategory] = useState('')
@@ -112,6 +115,8 @@ export default function Admin() {
         setIsLoggedIn(true)
         setLoginError('')
         fetchProducts()
+        fetchSlides()
+        fetchOperationalData()
       }
     } catch {
       setLoginError('Incorrect username or password')
@@ -133,6 +138,27 @@ export default function Admin() {
       setSlideItems(res.data)
     } catch {
       setSlideItems([])
+    }
+  }
+
+  async function fetchOperationalData() {
+    const [ordersResponse, usersResponse] = await Promise.allSettled([
+      axios.get('/api/admin/orders'),
+      axios.get('/api/admin/users'),
+    ])
+    setOrders(ordersResponse.status === 'fulfilled' ? ordersResponse.value.data : [])
+    setUserSessions(usersResponse.status === 'fulfilled' ? usersResponse.value.data : [])
+  }
+
+  async function updateOrderStatus(orderId, status) {
+    try {
+      const response = await axios.put(`http://localhost:5000/api/admin/orders/${orderId}/status`, { status })
+      if (response.status === 200 && response.data.success) {
+        setOrders(currentOrders => currentOrders.map(order => order.id === orderId ? { ...order, status } : order))
+        showToast('Order status updated')
+      }
+    } catch {
+      showToast('Unable to update order status')
     }
   }
 
@@ -265,11 +291,6 @@ export default function Admin() {
     }
   }
 
-  useEffect(() => {
-    fetchProducts()
-    fetchSlides()
-  }, [])
-
   async function handleDelete(id) {
     if (!window.confirm('Remove this item from the shop?')) return
     try {
@@ -331,7 +352,7 @@ export default function Admin() {
 
   // ADMIN DASHBOARD
   return (
-    <div className="min-h-screen bg-blush">
+    <div className="flex flex-col min-h-screen bg-blush">
       {/* Admin Nav */}
       <div className="bg-white border-b border-blush-border px-8 py-4 flex items-center justify-between">
         <p className="font-script text-3xl text-wine">Maison by Kimberly</p>
@@ -349,13 +370,35 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-medium text-wine-deep">Product Manager</h1>
-          <p className="text-sm text-wine-light mt-1">Add new pieces to your shop, or remove items that have sold.</p>
+      <nav className="w-full flex items-center justify-start gap-4 px-8 py-4 bg-transparent border-b border-white/10 mb-6" aria-label="Admin sections">
+        {[
+          ['products', 'Product Studio'],
+          ['media', 'Media and Banner Manager'],
+          ['orders', 'Order Fullfillment'],
+        ].map(([tab, label]) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setCurrentTab(tab)}
+            className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === tab ? 'border-b-2 border-wine text-wine' : 'text-wine-light hover:text-wine'}`}
+            aria-current={currentTab === tab ? 'page' : undefined}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      <main className="w-full px-8 flex-1">
+      <div className="w-full px-0 py-10">
+        <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-medium text-wine-deep">Admin Workspace</h1>
+            <p className="text-sm text-wine-light mt-1">Manage the Maison catalogue, homepage, and live orders.</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8">
+        {currentTab === 'products' && (
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-8">
 
           {/* ADD PRODUCT FORM */}
           <div className="bg-white border border-blush-border rounded-2xl p-7">
@@ -584,9 +627,11 @@ export default function Admin() {
             )}
           </div>
 
-        </div>
+          </div>
+        )}
 
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8">
+        {currentTab === 'media' && (
+          <div className="mt-10 grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8">
           <div className="bg-white border border-blush-border rounded-2xl p-7">
             <h2 className="text-base font-semibold text-wine-deep mb-6">✦ Slide Manager</h2>
             <form onSubmit={handleSaveSlide} className="flex flex-col gap-4">
@@ -740,8 +785,87 @@ export default function Admin() {
               </div>
             )}
           </div>
-        </div>
+          </div>
+        )}
+
+        {currentTab === 'orders' && (
+          <section className="mt-10 grid gap-8 lg:grid-cols-[1.5fr_0.8fr]">
+          <div className="overflow-hidden rounded-2xl border border-blush-border bg-white p-7">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-wine-deep">Order Monitor</h2>
+              <span className="text-xs text-wine-light">{orders.length} transaction{orders.length === 1 ? '' : 's'}</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left text-xs">
+                <thead className="border-b border-blush-border text-[10px] uppercase tracking-wider text-wine-light">
+                  <tr>
+                    <th className="px-3 py-3">Order ID</th>
+                    <th className="px-3 py-3">Customer Email</th>
+                    <th className="px-3 py-3">Telephone</th>
+                    <th className="px-3 py-3">Delivery Coordinates</th>
+                    <th className="px-3 py-3">Total Bill</th>
+                    <th className="px-3 py-3">Payment State</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-blush-border text-wine-deep">
+                  {orders.map(order => (
+                    <tr key={order.id}>
+                      <td className="px-3 py-3 font-semibold">#{order.id}</td>
+                      <td className="px-3 py-3">{order.email}</td>
+                      <td className="px-3 py-3">{order.phone_number}</td>
+                      <td className="max-w-[220px] px-3 py-3">{order.delivery_address}</td>
+                      <td className="whitespace-nowrap px-3 py-3">KSh {Number(order.total_amount).toLocaleString()}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className={order.status === 'pending'
+                            ? 'bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold border border-amber-200'
+                            : order.status === 'Complete' || order.status === 'Delivered'
+                              ? 'bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200'
+                              : 'bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-xs font-bold border border-slate-200'}
+                          >
+                            {order.status || 'pending'}
+                          </span>
+                          <select
+                            value={order.status || 'pending'}
+                            onChange={event => updateOrderStatus(order.id, event.target.value)}
+                            className="rounded-lg border border-blush-border bg-white px-2 py-1 text-xs font-semibold text-wine-deep"
+                            aria-label={`Update status for order ${order.id}`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="Complete">Complete</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {!orders.length && <p className="py-8 text-center text-sm text-wine-light">No transactions recorded yet.</p>}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-blush-border bg-white p-7">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-wine-deep">Active User Authentications</h2>
+              <span className="text-xs text-wine-light">{userSessions.length}</span>
+            </div>
+            <div className="space-y-3">
+              {userSessions.map(session => (
+                <div key={session.id || `${session.user_id}-${session.authenticated_at}`} className="rounded-xl bg-blush px-4 py-3">
+                  <p className="truncate text-sm font-semibold text-wine-deep">{session.email}</p>
+                  <p className="mt-1 text-xs text-wine-light">User ID: {session.user_id}</p>
+                  <p className="mt-1 text-xs text-wine-light">{new Date(session.authenticated_at).toLocaleString()}</p>
+                </div>
+              ))}
+              {!userSessions.length && <p className="py-8 text-center text-sm text-wine-light">No authentications recorded yet.</p>}
+            </div>
+          </div>
+          </section>
+        )}
       </div>
+      </main>
 
       {/* Toast */}
       {toast && (
