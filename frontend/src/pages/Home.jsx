@@ -36,28 +36,33 @@ const defaultSlides = [
 ]
 
 const categories = [
-  { slug: 'dresses', label: 'Dresses', icon: '👗' },
-  { slug: 'tops', label: 'Tops', icon: '👚' },
-  { slug: 'crop-tops', label: 'Crop Tops', icon: '✨' },
-  { slug: 'boho-skirts', label: 'Skirt / Boho Skirts', icon: '🌸' },
-  { slug: 'trousers', label: 'Trousers', icon: '👖' },
-  { slug: 'palazzo', label: 'Palazzo / Official', icon: '💼' },
-  { slug: 'jumpsuit', label: 'Jumpsuit', icon: '🧥' },
-  { slug: 'jumpshorts', label: 'Jumpshorts', icon: '🩳' },
-  { slug: 'shoes', label: 'Shoes', icon: '👠' },
+  { slug: 'dresses', label: 'Dresses'},
+  { slug: 'tops', label: 'Tops'},
+  { slug: 'crop-tops', label: 'Crop Tops' },
+  { slug: 'boho-skirts', label: 'Skirt / Boho Skirts'},
+  { slug: 'trousers', label: 'Trousers'},
+  { slug: 'palazzo', label: 'Palazzo / Official'},
+  { slug: 'jumpsuit', label: 'Jumpsuit'},
+  { slug: 'jumpshorts', label: 'Jumpshorts'},
+  { slug: 'shoes', label: 'Shoes' },
 ]
 
 const badges = [
-  { icon: '💎', title: 'Curated Quality', desc: 'Every item inspected and selected by hand' },
-  { icon: '🌿', title: 'Sustainable Fashion', desc: 'Give beautiful clothes a second life' },
-  { icon: '📦', title: 'One of a Kind', desc: 'Limited pieces — once it\'s gone, it\'s gone' },
-  { icon: '💬', title: 'Order via WhatsApp', desc: 'Fast, personal, and direct to Kim' },
+  {  title: 'Curated Quality', desc: 'Every item inspected and selected by hand' },
+  {  title: 'Sustainable Fashion', desc: 'Give beautiful clothes a second life' },
+  {  title: 'One of a Kind', desc: 'Limited pieces — once it\'s gone, it\'s gone' },
+  {  title: 'Order via WhatsApp', desc: 'Fast, personal, and direct to Kim' },
 ]
 
 export default function Home() {
   const [slides, setSlides] = useState([])
   const [featured, setFeatured] = useState([])
   const [newArrivals, setNewArrivals] = useState([])
+  const [theme, setTheme] = useState(() => {
+    const savedTheme = window.localStorage.getItem('maison-theme')
+    if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
 
   useEffect(() => {
     axios.get('/api/homepage/slides')
@@ -73,28 +78,46 @@ export default function Home() {
       .catch(() => setNewArrivals([]))
   }, [])
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    window.localStorage.setItem('maison-theme', theme)
+  }, [theme])
+
+  const isDark = theme === 'dark'
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-rose-500/20 via-slate-50 to-white">
+    <div className={isDark ? 'min-h-screen w-full bg-slate-950 text-slate-100' : 'min-h-screen w-full bg-gradient-to-b from-rose-500/20 via-slate-50 to-white text-slate-900'}>
       {/* HERO */}
-      <div className="relative min-h-screen overflow-hidden border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 sm:py-16">
+      <div className={isDark ? 'relative min-h-screen overflow-hidden border-b border-slate-700/60 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 px-6 py-12 sm:py-16' : 'relative min-h-screen overflow-hidden border-b border-slate-200/60 bg-gradient-to-b from-rose-500/20 via-slate-50 to-white px-6 py-12 sm:py-16'}>
         <div className="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+          <div className="flex justify-end pb-4">
+            <button
+              type="button"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-pressed={isDark}
+              onClick={() => setTheme(current => current === 'dark' ? 'light' : 'dark')}
+              className={isDark ? 'rounded-full border border-slate-600 bg-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-100 transition hover:border-slate-500 hover:text-white' : 'rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700 transition hover:border-pink-300 hover:text-pink-700'}
+            >
+              {isDark ? 'Light mode' : 'Dark mode'}
+            </button>
+          </div>
           <HeroSlider slides={slides.length ? slides : defaultSlides} />
         </div>
       </div>
 
       {/* CATEGORIES */}
-      <section className="mx-auto max-w-7xl px-6 py-20 sm:px-8 lg:px-12">
-        <p className="section-eyebrow">Browse by</p>
-        <h2 className="section-title">Categories</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+      <section className={isDark ? 'mx-auto max-w-7xl px-6 py-20 sm:px-8 lg:px-12' : 'mx-auto max-w-7xl px-6 py-20 sm:px-8 lg:px-12'}>
+        <p className={isDark ? 'section-eyebrow text-pink-300' : 'section-eyebrow'}>Browse by</p>
+        <h2 className={isDark ? 'mb-12 text-center font-serif text-4xl font-semibold text-pink-200 sm:text-5xl' : 'section-title'}>Categories</h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
           {categories.map(cat => (
             <Link
               key={cat.slug}
               to={`/shop?cat=${cat.slug}`}
-              className="flex flex-col items-center justify-center gap-3 py-7 px-4 bg-blush border-2 border-wine/35 rounded-2xl transition-all duration-350 hover:bg-wine hover:border-wine hover:-translate-y-1 hover:shadow-lg group"
+              aria-label={`Browse ${cat.label} products`}
+              className={isDark ? 'flex min-h-[96px] items-center justify-center rounded-2xl border border-slate-700 bg-slate-900 px-4 py-4 text-center transition-all duration-350 hover:-translate-y-1 hover:border-pink-400 hover:bg-slate-800 hover:shadow-lg group' : 'flex min-h-[96px] items-center justify-center rounded-2xl border-2 border-wine/35 bg-blush px-4 py-4 text-center transition-all duration-350 hover:-translate-y-1 hover:border-wine hover:bg-wine hover:shadow-lg group'}
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-wine/10 text-3xl text-wine group-hover:bg-white/15">{cat.icon}</span>
-              <span className="text-sm font-semibold text-wine group-hover:text-white text-center transition-colors">
+              <span className={isDark ? 'text-sm font-semibold text-slate-100 transition-colors group-hover:text-white' : 'text-sm font-semibold text-wine transition-colors group-hover:text-white'}>
                 {cat.label}
               </span>
             </Link>

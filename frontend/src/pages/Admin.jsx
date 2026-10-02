@@ -571,7 +571,7 @@ export default function Admin() {
 
             {products.length === 0 ? (
               <div className="text-center py-16 text-wine-light text-sm">
-                No pieces yet. Add your first item! 💕
+                No pieces yet. Add your first item! 
               </div>
             ) : (
               <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
@@ -585,7 +585,7 @@ export default function Admin() {
                       />
                     ) : (
                       <div className="w-14 h-14 rounded-lg bg-blush-mid flex items-center justify-center text-xl flex-shrink-0">
-                        👗
+                        
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
